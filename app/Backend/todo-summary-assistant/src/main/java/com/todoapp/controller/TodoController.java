@@ -27,8 +27,8 @@ public class TodoController {
     private SlackService slackService;
 
     @GetMapping
-    public ResponseEntity<List<Todo>> getAllTodos() {
-        return ResponseEntity.ok(todoService.getAllTodos());
+    public ResponseEntity<?> getAllTodos() {
+    return ResponseEntity.ok("DEPLOYED FROM GITHUB ACTIONS SUCCESS");
     }
 
     @PostMapping
