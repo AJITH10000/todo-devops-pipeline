@@ -12,6 +12,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
+    # ---------------- DOCKER ----------------
+
     - name: Docker login
       uses: docker/login-action@v3
       with:
@@ -30,16 +32,29 @@ jobs:
     - name: Push frontend
       run: docker push ajithkumarreddy/todo-frontend:latest
 
+
+    # ---------------- KUBERNETES ----------------
+
     - name: Install kubectl
       uses: azure/setup-kubectl@v4
 
-    - name: Load kubeconfig
+    - name: Configure kubeconfig
       run: |
-        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
         mkdir -p $HOME/.kube
-        mv kubeconfig $HOME/.kube/config
+        echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
+        chmod 600 $HOME/.kube/config
+
+    # VERY IMPORTANT → force kubectl to use this config
+    - name: Verify cluster connection
+      env:
+        KUBECONFIG: $HOME/.kube/config
+      run: kubectl get nodes
 
     - name: Restart deployments
+      env:
+        KUBECONFIG: $HOME/.kube/config
       run: |
         kubectl rollout restart deployment backend
         kubectl rollout restart deployment frontend
+        kubectl rollout status deployment backend
+        kubectl rollout status deployment frontend
