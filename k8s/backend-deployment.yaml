@@ -1,23 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: backend
+  name: todo-backend
+  namespace: todo-app
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: backend
+      app: todo-backend
   template:
     metadata:
       labels:
-        app: backend
+        app: todo-backend
     spec:
       containers:
-      - name: backend
+      - name: todo
         image: ajithkumarreddy/todo-backend:latest
         imagePullPolicy: Always
+
         ports:
         - containerPort: 8080
+
         env:
         - name: SPRING_DATASOURCE_URL
           value: jdbc:mysql://mysql:3306/tododb
@@ -25,3 +28,31 @@ spec:
           value: root
         - name: SPRING_DATASOURCE_PASSWORD
           value: root
+
+        # ---------- READINESS (when traffic allowed) ----------
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 25
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 5
+
+        # ---------- LIVENESS (when container restarted) ----------
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          initialDelaySeconds: 40
+          periodSeconds: 20
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
