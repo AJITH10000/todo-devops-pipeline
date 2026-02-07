@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/todos")
-@CrossOrigin(origins = "http://localhost:3000") // Allow frontend access
+@CrossOrigin(origins = "*")
 public class TodoController {
 
     @Autowired
@@ -27,8 +27,8 @@ public class TodoController {
     private SlackService slackService;
 
     @GetMapping
-    public ResponseEntity<?> getAllTodos() {
-    return ResponseEntity.ok("DEPLOYED FROM GITHUB ACTIONS SUCCESS");
+    public ResponseEntity<List<Todo>> getAllTodos() {
+        return ResponseEntity.ok(todoService.getAllTodos());
     }
 
     @PostMapping
@@ -49,29 +49,22 @@ public class TodoController {
 
     @PostMapping("/summarize")
     public ResponseEntity<String> summarizeAndSendToSlack() {
-        try {
-            List<Todo> pendingTodos = todoService.getPendingTodos();
-            if (pendingTodos.isEmpty()) {
-                return ResponseEntity.ok("No pending todos to summarize.");
-            }
+        List<Todo> pendingTodos = todoService.getPendingTodos();
 
-            // Prepare text for summarization
-            String todosText = pendingTodos.stream()
-                    .map(todo -> "- " + todo.getTitle() + ": " + todo.getDescription())
-                    .collect(Collectors.joining("\n"));
-
-            String summary = cohereService.summarizeText("Please summarize the following to-do items:\n" + todosText);
-
-            boolean slackSuccess = slackService.sendSlackMessage("Todo Summary:\n" + summary);
-
-            if (slackSuccess) {
-                return ResponseEntity.ok("Summary generated and sent to Slack successfully!");
-            } else {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to send summary to Slack.");
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing summary: " + e.getMessage());
+        if (pendingTodos.isEmpty()) {
+            return ResponseEntity.ok("No pending todos to summarize.");
         }
+
+        String todosText = pendingTodos.stream()
+                .map(todo -> "- " + todo.getTitle() + ": " + todo.getDescription())
+                .collect(Collectors.joining("\n"));
+
+        String summary = cohereService.summarizeText(
+                "Summarize these todos:\n" + todosText
+        );
+
+        slackService.sendSlackMessage("Todo Summary:\n" + summary);
+
+        return ResponseEntity.ok(summary);
     }
 }
