@@ -47,30 +47,29 @@ public class TodoController {
         return ResponseEntity.noContent().build();
     }
 
-   @PostMapping("/summarize")
-   public ResponseEntity<String> summarizeAndSendToSlack() {
-    try {
-        List<Todo> pendingTodos = todoService.getPendingTodos();
+    @PostMapping("/summarize")
+    public ResponseEntity<String> summarizeAndSendToSlack() {
+        try {
+            List<Todo> pendingTodos = todoService.getPendingTodos();
 
-        if (pendingTodos.isEmpty()) {
-            return ResponseEntity.ok("No pending todos to summarize.");
+            if (pendingTodos.isEmpty()) {
+                return ResponseEntity.ok("No pending todos to summarize.");
+            }
+
+            String todosText = pendingTodos.stream()
+                    .map(todo -> "- " + todo.getTitle() + ": " + todo.getDescription())
+                    .collect(Collectors.joining("\n"));
+
+            String summary = cohereService.summarizeText("Summarize these todos:\n" + todosText);
+
+            slackService.sendSlackMessage("Todo Summary:\n" + summary);
+
+            return ResponseEntity.ok(summary);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error generating summary: " + e.getMessage());
         }
-
-        String todosText = pendingTodos.stream()
-                .map(todo -> "- " + todo.getTitle() + ": " + todo.getDescription())
-                .collect(Collectors.joining("\n"));
-
-        String summary = cohereService.summarizeText(
-                "Summarize these todos:\n" + todosText
-        );
-
-        slackService.sendSlackMessage("Todo Summary:\n" + summary);
-
-        return ResponseEntity.ok(summary);
-
-    } catch (Exception e) {
-        e.printStackTrace();
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Error generating summary: " + e.getMessage());
     }
 }
