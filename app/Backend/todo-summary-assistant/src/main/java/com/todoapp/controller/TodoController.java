@@ -26,9 +26,10 @@ public class TodoController {
     @Autowired
     private SlackService slackService;
 
+    // 🔴 DEPLOYMENT TEST ENDPOINT
     @GetMapping
-    public ResponseEntity<List<Todo>> getAllTodos() {
-        return ResponseEntity.ok(todoService.getAllTodos());
+    public ResponseEntity<String> getAllTodos() {
+        return ResponseEntity.ok("DEPLOYED FROM EC2 CI/CD " + System.currentTimeMillis());
     }
 
     @PostMapping
