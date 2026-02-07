@@ -47,8 +47,9 @@ public class TodoController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/summarize")
-    public ResponseEntity<String> summarizeAndSendToSlack() {
+   @PostMapping("/summarize")
+   public ResponseEntity<String> summarizeAndSendToSlack() {
+    try {
         List<Todo> pendingTodos = todoService.getPendingTodos();
 
         if (pendingTodos.isEmpty()) {
@@ -66,5 +67,10 @@ public class TodoController {
         slackService.sendSlackMessage("Todo Summary:\n" + summary);
 
         return ResponseEntity.ok(summary);
+
+    } catch (Exception e) {
+        e.printStackTrace();
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Error generating summary: " + e.getMessage());
     }
 }
