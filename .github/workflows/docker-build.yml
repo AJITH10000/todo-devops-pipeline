@@ -20,11 +20,11 @@ jobs:
 
     - name: Build Backend Image
       run: |
-        docker build -t ajithkumarreddy/todo-backend:latest -f docker/Dockerfile .
+        docker build --no-cache -t ajithkumarreddy/todo-backend:latest -f docker/Dockerfile .
 
     - name: Build Frontend Image
       run: |
-        docker build -t ajithkumarreddy/todo-frontend:latest -f docker/Dockerfile.frontend .
+        docker build --no-cache -t ajithkumarreddy/todo-frontend:latest -f docker/Dockerfile.frontend .
 
     - name: Push Backend Image
       run: docker push ajithkumarreddy/todo-backend:latest
